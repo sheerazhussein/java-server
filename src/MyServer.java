@@ -1,24 +1,28 @@
 import java.io.*;
 import java.net.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MyServer {
     public static void main(String[] args) {
         int port = 8080;
+        // Creates a pool of 10 threads to handle 10 clients simultaneously
+        ExecutorService threadPool = Executors.newFixedThreadPool(10);
+
         try (ServerSocket serverSocket = new ServerSocket(port)) {
-            System.out.println("Server is waiting on port " + port + "...");
+            System.out.println("Advanced Server started on port " + port);
 
             while (true) {
-                // Wait for a client to connect
-                try (Socket socket = serverSocket.accept()) {
-                    System.out.println("Client connected!");
+                Socket clientSocket = serverSocket.accept();
+                System.out.println("New connection from: " + clientSocket.getRemoteSocketAddress());
 
-                    // Send a simple message back to the client
-                    PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-                    out.println("HTTP/1.1 200 OK\r\n\r\nHello! Your Java server is working.");
-                }
+                // Pass the client to a separate thread
+                threadPool.execute(new ClientHandler(clientSocket));
             }
         } catch (IOException e) {
-            System.out.println("Server error: " + e.getMessage());
+            System.err.println("Server Error: " + e.getMessage());
         }
     }
 }
+
+
